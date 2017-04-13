@@ -24,9 +24,14 @@ public class GameView extends SurfaceView implements Runnable {
     private Canvas canvas;
     private SurfaceHolder surfaceHolder;
     private ArrayList<Star> stars = new ArrayList<Star>();
-    private Enemy[] enemies;
-    private int enemyCount = 3;
+    private Enemy enemies;
+    private Friend friend;
     private Boom boom;
+    int screenX;
+    int countMisses;
+    boolean flag;
+    private boolean isGameOver;
+
     public GameView(Context context, int screenX, int screenY) {
         super(context);
         player = new Player(context, screenX, screenY);
@@ -37,11 +42,12 @@ public class GameView extends SurfaceView implements Runnable {
             Star s = new Star(screenX, screenY);
             stars.add(s);
         }
-        enemies = new Enemy[enemyCount];
-        for (int i = 0; i < enemyCount; i++) {
-            enemies[i] = new Enemy(context, screenX, screenY);
-        }
+        enemies = new Enemy(context, screenX, screenY);
+        friend = new Friend(context, screenX, screenY);
         boom = new Boom(context);
+        this.screenX = screenX;
+        countMisses = 0;
+        isGameOver = false;
     }
 
     @Override
@@ -60,13 +66,32 @@ public class GameView extends SurfaceView implements Runnable {
         for (Star s : stars) {
             s.update(player.getSpeed());
         }
-        for (int i = 0; i < enemyCount; i++) {
-            enemies[i].update(player.getSpeed());
-            if (Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
-                boom.setX(enemies[i].getX());
-                boom.setY(enemies[i].getY());
-                enemies[i].setX(-200);
+        if (enemies.getX() == screenX) {
+            flag = true;
+        }
+        enemies.update(player.getSpeed());
+        if (Rect.intersects(player.getDetectCollision(), enemies.getDetectCollision())) {
+            boom.setX(enemies.getX());
+            boom.setY(enemies.getY());
+            enemies.setX(-200);
+        } else {
+            if (flag) {
+                if (enemies.getDetectCollision().left < 0 && enemies.getDetectCollision().left > -100) {
+                    countMisses++;
+                    flag = false;
+                    if (countMisses == 3) {
+                        playing = false;
+                        isGameOver = true;
+                    }
+                }
             }
+        }
+        friend.update(player.getSpeed());
+        if (Rect.intersects(player.getDetectCollision(), friend.getDetectCollision())){
+            boom.setX(friend.getX());
+            boom.setY(friend.getY());
+            playing = false;
+            isGameOver = true;
         }
     }
 
@@ -85,14 +110,13 @@ public class GameView extends SurfaceView implements Runnable {
                     player.getX(),
                     player.getY(),
                     paint);
-            for (int i = 0; i < enemyCount; i++) {
-                canvas.drawBitmap(
-                        enemies[i].getBitmap(),
-                        enemies[i].getX(),
-                        enemies[i].getY(),
-                        paint
-                );
-            }
+
+            canvas.drawBitmap(
+                    enemies.getBitmap(),
+                    enemies.getX(),
+                    enemies.getY(),
+                    paint
+            );
 
             canvas.drawBitmap(
                     boom.getBitmap(),
@@ -100,6 +124,18 @@ public class GameView extends SurfaceView implements Runnable {
                     boom.getY(),
                     paint
             );
+            canvas.drawBitmap(
+                    friend.getBitmap(),
+                    friend.getX(),
+                    friend.getY(),
+                    paint
+            );
+            if (isGameOver) {
+                paint.setTextSize(150);
+                paint.setTextAlign(Paint.Align.CENTER);
+                int yPos = (int) ((canvas.getHeight() / 2) - (paint.descent() + paint.ascent()) / 2);
+                canvas.drawText("Game Over", canvas.getWidth() / 2, yPos, paint);
+            }
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
