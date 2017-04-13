@@ -26,13 +26,13 @@ public class Enemy {
     public Enemy(Context context, int screenX, int screenY) {
         bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.enemy);
         maxX = screenX;
-        maxY = screenY;
+        maxY = screenY - bitmap.getHeight();
         minX = 0;
         minY = 0;
         Random generator = new Random();
         speed = generator.nextInt(6) + 10;
         x = screenX;
-        y = generator.nextInt(maxY) - bitmap.getHeight();
+        y = generator.nextInt(maxY);
         detectCollision = new Rect(x, y, bitmap.getWidth(), bitmap.getHeight());
     }
 
@@ -43,7 +43,7 @@ public class Enemy {
             Random generator = new Random();
             speed = generator.nextInt(10) + 10;
             x = maxX;
-            y = generator.nextInt(maxY) - bitmap.getHeight();
+            y = generator.nextInt(maxY);
         }
         detectCollision.left = x;
         detectCollision.top = y;
